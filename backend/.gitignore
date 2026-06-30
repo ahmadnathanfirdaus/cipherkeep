@@ -1,0 +1,11 @@
+# Environment files (never commit real secrets)
+.env
+.env.local
+
+# Build output
+/server
+/out
+
+# Go test/coverage artifacts
+*.out
+coverage.txt

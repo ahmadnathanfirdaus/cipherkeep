@@ -1,0 +1,16 @@
+# Development overrides, applied automatically on top of docker-compose.yml when you
+# run `docker compose up` locally. Keep production-only concerns out of here.
+#
+# What this adds for local development:
+#   - Publishes the Postgres port to the host so you can connect with psql / a GUI.
+#   - Sets APP_ENV=development and verbose logging on the API.
+
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  api:
+    environment:
+      APP_ENV: development
+      LOG_LEVEL: debug

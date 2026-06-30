@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" fill="none" role="img" aria-label="Cipherkeep">
+  <mask id="ck-keyhole">
+    <rect x="23" y="23" width="10" height="10" rx="3" fill="#fff"/>
+    <circle cx="28" cy="27.5" r="1.9" fill="#000"/>
+    <rect x="26.8" y="28.5" width="2.4" height="3.4" fill="#000"/>
+  </mask>
+  <rect x="9" y="9" width="38" height="38" rx="11" stroke="#2dd4bf" stroke-width="2.5"/>
+  <rect x="16.5" y="16.5" width="23" height="23" rx="7" stroke="#0d9488" stroke-width="2.5"/>
+  <rect x="23" y="23" width="10" height="10" rx="3" fill="#0d9488" mask="url(#ck-keyhole)"/>
+</svg>

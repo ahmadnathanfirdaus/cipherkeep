@@ -1,0 +1,74 @@
+# Full-stack deployment for Cipherkeep.
+#
+#   postgres  ──(healthy)──▶  api (Go/Gin)  ◀── frontend (nginx-served SPA)
+#
+# Usage:
+#   cp .env.example .env   # then edit MASTER_PASSWORD and JWT_SECRET
+#   docker compose up --build
+#
+# The browser talks to the API directly, so the API port is published to the host
+# and the SPA is built with VITE_API_BASE_URL pointing at that host URL.
+
+name: cipherkeep
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cipherkeep}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cipherkeep}
+      POSTGRES_DB: ${POSTGRES_DB:-cipherkeep}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cipherkeep} -d ${POSTGRES_DB:-cipherkeep}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - internal
+
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      HTTP_PORT: "8080"
+      DATABASE_URL: postgres://${POSTGRES_USER:-cipherkeep}:${POSTGRES_PASSWORD:-cipherkeep}@postgres:5432/${POSTGRES_DB:-cipherkeep}?sslmode=disable
+      MASTER_PASSWORD: ${MASTER_PASSWORD:?set MASTER_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-168h}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks:
+      - internal
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the bundle at build time; must be reachable from the browser.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api/v1}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    networks:
+      - internal
+
+volumes:
+  postgres_data:
+
+networks:
+  internal:
+    driver: bridge
